@@ -209,6 +209,62 @@ Dans la page du dashboard → **"Add Widget"** → choisir un type de graphique.
 
 ---
 
+## 🚢 Déploiement via Portainer (recommandé pour la production)
+
+Le moyen le plus simple de déployer la stack sur un serveur est d'utiliser **Portainer** avec l'image CI pré-construite hébergée sur GitHub Container Registry (GHCR).
+
+À chaque push sur `main`, GitHub Actions build et publie automatiquement 4 images :
+
+| Image | Rôle |
+|---|---|
+| `ghcr.io/neytirii/monitoring-backend:latest` | API Fastify |
+| `ghcr.io/neytirii/monitoring-frontend:latest` | Interface React (nginx) |
+| `ghcr.io/neytirii/monitoring-caddy:latest` | Reverse proxy (Caddyfile intégré) |
+| `ghcr.io/neytirii/monitoring-postgres:latest` | TimescaleDB + init automatique |
+
+### Pré-requis
+
+- Un serveur avec [Docker](https://docs.docker.com/engine/install/) et [Portainer](https://docs.portainer.io/start/install-ce) installés.
+- Accès à l'interface Portainer (par défaut sur le port 9000 ou 9443).
+
+### Déployer la stack
+
+1. **Ouvrir Portainer** → sélectionner l'environnement cible → **Stacks** → **Add stack**.
+
+2. **Choisir "Repository"** et renseigner :
+   - Repository URL : `https://github.com/Neytirii/monitoring`
+   - Compose path : `docker-compose.portainer.yml`
+   - Cocher **"Automatic updates"** (optionnel) pour redéployer automatiquement à chaque nouveau push.
+
+3. **Définir les variables d'environnement** dans la section *Environment variables* :
+
+   | Variable | Obligatoire | Description |
+   |---|---|---|
+   | `JWT_SECRET` | ✅ | Secret JWT utilisateurs — générer avec `openssl rand -base64 32` |
+   | `JWT_AGENT_SECRET` | ✅ | Secret JWT agents — générer avec `openssl rand -base64 32` |
+   | `PUBLIC_URL` | | URL publique ex. `https://monitoring.example.com` (défaut : `http://localhost`) |
+   | `POSTGRES_USER` | | Utilisateur PostgreSQL (défaut : `monitoring`) |
+   | `POSTGRES_PASSWORD` | | Mot de passe PostgreSQL (défaut : `monitoring`) |
+   | `POSTGRES_DB` | | Nom de la base (défaut : `monitoring`) |
+   | `HTTP_PORT` | | Port HTTP exposé (défaut : `80`) |
+   | `HTTPS_PORT` | | Port HTTPS exposé (défaut : `443`) |
+
+4. **Cliquer "Deploy the stack"**.
+
+Portainer télécharge les images, démarre les conteneurs et attend que PostgreSQL soit prêt avant de lancer le backend. La base de données est initialisée automatiquement (TimescaleDB + hypertable `metrics`).
+
+### Accéder à l'interface
+
+Ouvrir `http://<ip-du-serveur>` (ou `https://` si DNS + TLS configuré).
+
+### Mettre à jour la stack
+
+Avec **"Automatic updates"** activé, Portainer redéploie automatiquement après chaque push sur `main`.
+
+Sinon, dans Portainer → **Stacks** → votre stack → **Pull and redeploy**.
+
+---
+
 ## 🐳 Démarrage complet avec Docker Compose
 
 Tous les services dans des conteneurs (mode production-like).
