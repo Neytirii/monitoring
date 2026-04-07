@@ -16,8 +16,8 @@ export const config = {
   databaseUrl: requireEnv('DATABASE_URL', 'postgresql://monitoring:monitoring@localhost:5432/monitoring'),
   redisUrl: requireEnv('REDIS_URL', 'redis://localhost:6379'),
 
-  jwtSecret: requireEnv('JWT_SECRET'),
-  jwtAgentSecret: requireEnv('JWT_AGENT_SECRET'),
+  jwtSecret: requireEnv('JWT_SECRET', 'dev-jwt-secret-change-in-production'),
+  jwtAgentSecret: requireEnv('JWT_AGENT_SECRET', 'dev-agent-secret-change-in-production'),
 
   smtp: {
     host: process.env.SMTP_HOST ?? 'smtp.gmail.com',
