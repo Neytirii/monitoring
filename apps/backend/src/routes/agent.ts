@@ -117,17 +117,25 @@ export async function agentRoutes(fastify: FastifyInstance) {
       data: { status: 'ONLINE', lastSeen: new Date() },
     });
 
-    for (const metric of body.data.metrics) {
+    if (body.data.metrics.length > 0) {
+      // Bulk-insert all metrics in a single SQL statement
+      const values = body.data.metrics
+        .map((_, i) => {
+          const base = i * 6;
+          return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6}::jsonb)`;
+        })
+        .join(', ');
+
+      const params: unknown[] = [];
+      for (const metric of body.data.metrics) {
+        params.push(timestamp, hostId, tenantId, metric.name, metric.value, JSON.stringify(metric.tags ?? {}));
+      }
+
       await fastify.prisma.$executeRawUnsafe(
         `INSERT INTO metrics (time, host_id, tenant_id, name, value, tags)
-         VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+         VALUES ${values}
          ON CONFLICT DO NOTHING`,
-        timestamp,
-        hostId,
-        tenantId,
-        metric.name,
-        metric.value,
-        JSON.stringify(metric.tags ?? {}),
+        ...params,
       );
     }
 

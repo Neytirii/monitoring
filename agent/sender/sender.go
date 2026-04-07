@@ -82,8 +82,11 @@ func (s *Sender) Register(hostname string) (*RegisterResponse, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("register failed with status %d: %s", resp.StatusCode, string(body))
+		bodyBytes, readErr := io.ReadAll(resp.Body)
+		if readErr != nil {
+			return nil, fmt.Errorf("register failed with status %d (could not read response body: %w)", resp.StatusCode, readErr)
+		}
+		return nil, fmt.Errorf("register failed with status %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var result struct {

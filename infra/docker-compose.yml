@@ -47,8 +47,10 @@ services:
     environment:
       DATABASE_URL: postgresql://monitoring:monitoring@postgres:5432/monitoring
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
-      JWT_AGENT_SECRET: ${JWT_AGENT_SECRET:-change-me-agent-secret}
+      # IMPORTANT: Override these defaults with strong secrets in production
+      # Set JWT_SECRET and JWT_AGENT_SECRET as environment variables before running
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_AGENT_SECRET: ${JWT_AGENT_SECRET:?JWT_AGENT_SECRET must be set}
       PORT: 3000
       HOST: 0.0.0.0
       PUBLIC_URL: ${PUBLIC_URL:-http://localhost}

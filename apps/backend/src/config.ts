@@ -1,13 +1,23 @@
+const isProd = process.env.NODE_ENV === 'production';
+
+function requireEnv(name: string, fallback?: string): string {
+  const val = process.env[name] ?? fallback;
+  if (!val && isProd) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return val ?? '';
+}
+
 export const config = {
   port: parseInt(process.env.PORT ?? '3000', 10),
   host: process.env.HOST ?? '0.0.0.0',
   publicUrl: process.env.PUBLIC_URL ?? 'http://localhost:3000',
 
-  databaseUrl: process.env.DATABASE_URL ?? 'postgresql://monitoring:monitoring@localhost:5432/monitoring',
-  redisUrl: process.env.REDIS_URL ?? 'redis://localhost:6379',
+  databaseUrl: requireEnv('DATABASE_URL', 'postgresql://monitoring:monitoring@localhost:5432/monitoring'),
+  redisUrl: requireEnv('REDIS_URL', 'redis://localhost:6379'),
 
-  jwtSecret: process.env.JWT_SECRET ?? 'change-me-in-production-very-long-secret',
-  jwtAgentSecret: process.env.JWT_AGENT_SECRET ?? 'change-me-agent-secret',
+  jwtSecret: requireEnv('JWT_SECRET'),
+  jwtAgentSecret: requireEnv('JWT_AGENT_SECRET'),
 
   smtp: {
     host: process.env.SMTP_HOST ?? 'smtp.gmail.com',

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { isAxiosError } from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 import api from '../lib/api';
 
@@ -22,15 +23,7 @@ export default function LoginPage() {
       navigate('/hosts');
     } catch (err: unknown) {
       const message =
-        err &&
-        typeof err === 'object' &&
-        'response' in err &&
-        err.response &&
-        typeof err.response === 'object' &&
-        'data' in err.response &&
-        err.response.data &&
-        typeof err.response.data === 'object' &&
-        'error' in err.response.data
+        isAxiosError(err) && err.response?.data?.error
           ? String(err.response.data.error)
           : 'Login failed. Please try again.';
       setError(message);

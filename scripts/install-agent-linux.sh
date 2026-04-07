@@ -53,9 +53,12 @@ CONFIG_DIR="/etc/monitoring-agent"
 SERVICE_FILE="/etc/systemd/system/monitoring-agent.service"
 
 echo "==> Downloading monitoring agent (${OS}/${ARCH})..."
-curl -fsSL "$BINARY_URL" -o /tmp/monitoring-agent
-chmod +x /tmp/monitoring-agent
-mv /tmp/monitoring-agent "${INSTALL_DIR}/monitoring-agent"
+TMPFILE="$(mktemp)"
+trap 'rm -f "$TMPFILE"' EXIT
+curl -fsSL "$BINARY_URL" -o "$TMPFILE"
+chmod +x "$TMPFILE"
+mv "$TMPFILE" "${INSTALL_DIR}/monitoring-agent"
+trap - EXIT
 echo "    Installed to ${INSTALL_DIR}/monitoring-agent"
 
 echo "==> Creating configuration directory..."

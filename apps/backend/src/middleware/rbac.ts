@@ -8,6 +8,8 @@ const roleHierarchy: Record<Role, number> = {
   VIEWER: 1,
 };
 
+const validRoles = new Set<string>(['ADMIN', 'EDITOR', 'VIEWER']);
+
 export function requireRole(requiredRole: Role) {
   return async (request: FastifyRequest, reply: FastifyReply): Promise<void> => {
     const user = request.user;
@@ -17,7 +19,12 @@ export function requireRole(requiredRole: Role) {
       return;
     }
 
-    const userLevel = roleHierarchy[user.role as Role] ?? 0;
+    if (!validRoles.has(user.role)) {
+      reply.status(403).send({ error: 'Forbidden', message: 'Invalid user role' });
+      return;
+    }
+
+    const userLevel = roleHierarchy[user.role as Role];
     const requiredLevel = roleHierarchy[requiredRole];
 
     if (userLevel < requiredLevel) {

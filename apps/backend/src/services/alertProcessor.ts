@@ -1,6 +1,7 @@
 import { Worker, Queue } from 'bullmq';
 import Redis from 'ioredis';
 import { PrismaClient } from '@prisma/client';
+import { z } from 'zod';
 import { logger } from '../logger.js';
 import { config } from '../config.js';
 
@@ -11,6 +12,12 @@ export interface AlertEvaluationJob {
   value: number;
   timestamp: string;
 }
+
+const expressionSchema = z.object({
+  metric: z.string(),
+  operator: z.enum(['>', '>=', '<', '<=', '==', '=', '!=']),
+  threshold: z.number(),
+});
 
 const connection = new Redis(config.redisUrl, { maxRetriesPerRequest: null });
 
@@ -27,11 +34,16 @@ export function startAlertProcessor(prisma: PrismaClient) {
       });
 
       for (const trigger of triggers) {
-        const expression = trigger.expression as {
-          metric: string;
-          operator: string;
-          threshold: number;
-        };
+        const expressionParsed = expressionSchema.safeParse(trigger.expression);
+
+        if (!expressionParsed.success) {
+          logger.warn(`Trigger ${trigger.id} has invalid expression, skipping`, {
+            errors: expressionParsed.error.errors,
+          });
+          continue;
+        }
+
+        const expression = expressionParsed.data;
 
         if (expression.metric !== metricName) continue;
 
