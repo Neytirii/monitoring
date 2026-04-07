@@ -62,7 +62,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
         tenantId: host.tenantId,
         scope: 'agent',
       },
-      { secret: config.jwtAgentSecret, expiresIn: '30d' },
+      { key: config.jwtAgentSecret, expiresIn: '30d' },
     );
 
     return { host: updated, agentToken };
