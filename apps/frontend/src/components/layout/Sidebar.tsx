@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Network, Server, Bell, Settings } from 'lucide-react';
+import { LayoutDashboard, Network, Server, Bell, Settings, Zap } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const navItems = [
   { to: '/hosts', icon: Server, label: 'Hosts' },
   { to: '/alerts', icon: Bell, label: 'Alerts' },
+  { to: '/triggers', icon: Zap, label: 'Triggers' },
   { to: '/dashboard/default', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/network-map/default', icon: Network, label: 'Network Map' },
 ];

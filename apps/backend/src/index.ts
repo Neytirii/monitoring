@@ -17,6 +17,7 @@ import { metricRoutes } from './routes/metrics.js';
 import { dashboardRoutes } from './routes/dashboards.js';
 import { alertRoutes } from './routes/alerts.js';
 import { agentRoutes } from './routes/agent.js';
+import { triggerRoutes } from './routes/triggers.js';
 
 const app = Fastify({
   logger: false,
@@ -45,6 +46,7 @@ async function bootstrap() {
   await app.register(dashboardRoutes, { prefix: '/api/v1/dashboards' });
   await app.register(alertRoutes, { prefix: '/api/v1/alerts' });
   await app.register(agentRoutes, { prefix: '/api/v1/agent' });
+  await app.register(triggerRoutes, { prefix: '/api/v1/triggers' });
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 

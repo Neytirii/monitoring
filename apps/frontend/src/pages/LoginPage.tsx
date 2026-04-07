@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 import api from '../lib/api';
@@ -84,6 +84,16 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            No account yet?{' '}
+            <Link
+              to="/register"
+              className="text-primary-600 dark:text-primary-400 font-medium hover:underline"
+            >
+              Create one
+            </Link>
+          </p>
         </div>
       </div>
     </div>
