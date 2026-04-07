@@ -1,0 +1,93 @@
+# Portainer Stack — Monitoring Platform
+#
+# Déploiement via Portainer (Stacks → Add stack → Repository) :
+#   Repository URL : https://github.com/Neytirii/monitoring
+#   Compose path   : docker-compose.portainer.yml
+#
+# Variables d'environnement obligatoires à définir dans Portainer :
+#   JWT_SECRET        - Secret JWT pour les utilisateurs  (openssl rand -base64 32)
+#   JWT_AGENT_SECRET  - Secret JWT pour les agents        (openssl rand -base64 32)
+#
+# Variables optionnelles :
+#   PUBLIC_URL        - URL publique de l'application  (défaut : http://localhost)
+#   POSTGRES_USER     - Utilisateur PostgreSQL         (défaut : monitoring)
+#   POSTGRES_PASSWORD - Mot de passe PostgreSQL        (défaut : monitoring)
+#   POSTGRES_DB       - Nom de la base                 (défaut : monitoring)
+#   HTTP_PORT         - Port HTTP exposé               (défaut : 80)
+#   HTTPS_PORT        - Port HTTPS exposé              (défaut : 443)
+
+version: '3.9'
+
+services:
+  postgres:
+    image: ghcr.io/neytirii/monitoring-postgres:latest
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-monitoring}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-monitoring}
+      POSTGRES_DB: ${POSTGRES_DB:-monitoring}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-monitoring}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  backend:
+    image: ghcr.io/neytirii/monitoring-backend:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-monitoring}:${POSTGRES_PASSWORD:-monitoring}@postgres:5432/${POSTGRES_DB:-monitoring}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_AGENT_SECRET: ${JWT_AGENT_SECRET:?JWT_AGENT_SECRET must be set}
+      PORT: 3000
+      HOST: 0.0.0.0
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+      NODE_ENV: production
+    expose:
+      - '3000'
+
+  frontend:
+    image: ghcr.io/neytirii/monitoring-frontend:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    expose:
+      - '80'
+
+  caddy:
+    image: ghcr.io/neytirii/monitoring-caddy:latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - frontend
+    ports:
+      - '${HTTP_PORT:-80}:80'
+      - '${HTTPS_PORT:-443}:443'
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  postgres_data:
+  redis_data:
+  caddy_data:
+  caddy_config:
