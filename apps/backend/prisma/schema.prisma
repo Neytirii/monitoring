@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum Severity {
+  INFO
+  WARNING
+  HIGH
+  DISASTER
+}
+
+enum AlertState {
+  OK
+  FIRING
+  RESOLVED
+}
+
+enum HostStatus {
+  ONLINE
+  OFFLINE
+  UNKNOWN
+}
+
+model Tenant {
+  id                   String                @id @default(cuid())
+  name                 String
+  slug                 String                @unique
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  users                User[]
+  hosts                Host[]
+  dashboards           Dashboard[]
+  triggers             Trigger[]
+  notificationChannels NotificationChannel[]
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         Role       @default(VIEWER)
+  tenantId     String
+  tenant       Tenant     @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model Host {
+  id           String       @id @default(cuid())
+  name         String
+  hostname     String
+  ipAddress    String?
+  os           String?
+  agentToken   String       @unique @default(cuid())
+  status       HostStatus   @default(UNKNOWN)
+  lastSeen     DateTime?
+  tenantId     String
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  alerts       Alert[]
+  networkNodes NetworkNode[]
+}
+
+model Dashboard {
+  id        String    @id @default(cuid())
+  name      String
+  layout    Json      @default("[]")
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  widgets   Widget[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Widget {
+  id          String    @id @default(cuid())
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  type        String
+  title       String
+  config      Json
+  position    Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model NetworkMap {
+  id        String        @id @default(cuid())
+  name      String
+  tenantId  String
+  nodes     NetworkNode[]
+  edges     NetworkEdge[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model NetworkNode {
+  id           String     @id @default(cuid())
+  networkMapId String
+  networkMap   NetworkMap @relation(fields: [networkMapId], references: [id], onDelete: Cascade)
+  hostId       String?
+  host         Host?      @relation(fields: [hostId], references: [id])
+  label        String
+  type         String
+  positionX    Float
+  positionY    Float
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model NetworkEdge {
+  id           String     @id @default(cuid())
+  networkMapId String
+  networkMap   NetworkMap @relation(fields: [networkMapId], references: [id], onDelete: Cascade)
+  sourceId     String
+  targetId     String
+  label        String?
+  createdAt    DateTime   @default(now())
+}
+
+model Trigger {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  expression  Json
+  severity    Severity @default(WARNING)
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  enabled     Boolean  @default(true)
+  alerts      Alert[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Alert {
+  id            String         @id @default(cuid())
+  triggerId     String
+  trigger       Trigger        @relation(fields: [triggerId], references: [id])
+  hostId        String
+  host          Host           @relation(fields: [hostId], references: [id])
+  state         AlertState     @default(FIRING)
+  message       String
+  firedAt       DateTime       @default(now())
+  resolvedAt    DateTime?
+  notifications Notification[]
+}
+
+model NotificationChannel {
+  id            String         @id @default(cuid())
+  name          String
+  type          String
+  config        Json
+  tenantId      String
+  tenant        Tenant         @relation(fields: [tenantId], references: [id])
+  notifications Notification[]
+  createdAt     DateTime       @default(now())
+}
+
+model Notification {
+  id        String              @id @default(cuid())
+  alertId   String
+  alert     Alert               @relation(fields: [alertId], references: [id])
+  channelId String
+  channel   NotificationChannel @relation(fields: [channelId], references: [id])
+  sentAt    DateTime            @default(now())
+  success   Boolean
+  error     String?
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  resource   String
+  resourceId String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
