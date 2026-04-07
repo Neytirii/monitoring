@@ -22,8 +22,8 @@ interface NetworkMapProps {
 }
 
 export default function NetworkMap({ mapId }: NetworkMapProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

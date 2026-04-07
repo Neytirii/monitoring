@@ -68,7 +68,7 @@ services:
     depends_on:
       - backend
     expose:
-      - '5173'
+      - '80'
 
   caddy:
     image: caddy:2-alpine

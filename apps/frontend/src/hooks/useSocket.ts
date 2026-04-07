@@ -1,41 +1,47 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/useAuthStore';
 
 type EventHandler = (data: unknown) => void;
 
 export function useSocket() {
   const tenant = useAuthStore((s) => s.tenant);
-  const socketRef = useRef<Socket | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
   const handlersRef = useRef<Map<string, EventHandler[]>>(new Map());
 
   useEffect(() => {
     if (!tenant) return;
 
-    const socket = io('/', {
-      path: '/ws',
-      query: { tenantId: tenant.id },
-      transports: ['websocket'],
-    });
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws?tenantId=${tenant.id}`;
 
-    socketRef.current = socket;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
-    socket.on('connect', () => {
+    ws.onopen = () => {
       console.log('WebSocket connected');
-    });
+    };
 
-    socket.on('disconnect', () => {
+    ws.onclose = () => {
       console.log('WebSocket disconnected');
-    });
+    };
 
-    socket.onAny((event: string, data: unknown) => {
-      const handlers = handlersRef.current.get(event) ?? [];
-      handlers.forEach((h) => h(data));
-    });
+    ws.onerror = (err) => {
+      console.error('WebSocket error', err);
+    };
+
+    ws.onmessage = (event: MessageEvent) => {
+      try {
+        const msg = JSON.parse(event.data as string) as { type: string };
+        const handlers = handlersRef.current.get(msg.type) ?? [];
+        handlers.forEach((h) => h(msg));
+      } catch (e) {
+        console.error('Failed to parse WebSocket message', e);
+      }
+    };
 
     return () => {
-      socket.disconnect();
-      socketRef.current = null;
+      ws.close();
+      wsRef.current = null;
     };
   }, [tenant?.id]);
 
@@ -52,5 +58,5 @@ export function useSocket() {
     };
   }, []);
 
-  return { socket: socketRef.current, on };
+  return { socket: wsRef.current, on };
 }

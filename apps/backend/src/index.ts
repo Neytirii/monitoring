@@ -18,6 +18,7 @@ import { dashboardRoutes } from './routes/dashboards.js';
 import { alertRoutes } from './routes/alerts.js';
 import { agentRoutes } from './routes/agent.js';
 import { triggerRoutes } from './routes/triggers.js';
+import { startAlertProcessor } from './services/alertProcessor.js';
 
 const app = Fastify({
   logger: false,
@@ -51,6 +52,10 @@ async function bootstrap() {
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
 
   await app.listen({ port: config.port, host: config.host });
+
+  // Start the BullMQ worker that evaluates alert triggers after the DB is ready
+  startAlertProcessor(app.prisma);
+
   logger.info(`Server listening on ${config.host}:${config.port}`);
 }
 

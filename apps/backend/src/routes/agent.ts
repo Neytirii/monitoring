@@ -2,6 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
+import { alertQueue } from '../services/alertProcessor.js';
 
 const metricSchema = z.object({
   name: z.string(),
@@ -147,6 +148,21 @@ export async function agentRoutes(fastify: FastifyInstance) {
     });
 
     await fastify.redis.publish(`tenant:${tenantId}:metrics`, message);
+
+    // Enqueue alert evaluation for each metric
+    if (body.data.metrics.length > 0) {
+      const jobs = body.data.metrics.map((metric) => ({
+        name: 'evaluate',
+        data: {
+          tenantId,
+          hostId,
+          metricName: metric.name,
+          value: metric.value,
+          timestamp: body.data.timestamp,
+        },
+      }));
+      await alertQueue.addBulk(jobs);
+    }
 
     logger.debug(`Ingested ${body.data.metrics.length} metrics for host ${hostId}`);
 
