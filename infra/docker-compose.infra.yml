@@ -4,8 +4,6 @@
 # Usage:
 #   docker compose -f infra/docker-compose.infra.yml up -d
 
-version: '3.9'
-
 services:
   postgres:
     image: timescale/timescaledb:latest-pg16
