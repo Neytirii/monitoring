@@ -10,6 +10,11 @@ const createHostSchema = z.object({
   os: z.string().optional(),
 });
 
+const updateHostSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  hostname: z.string().min(1).max(255).optional(),
+});
+
 export async function hostRoutes(fastify: FastifyInstance) {
   const auth = { preHandler: [fastify.authenticate] };
 
@@ -63,6 +68,33 @@ export async function hostRoutes(fastify: FastifyInstance) {
 
     return { host };
   });
+
+  fastify.patch(
+    '/:id',
+    { preHandler: [fastify.authenticate, requireRole('EDITOR')] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const body = updateHostSchema.safeParse(request.body);
+      if (!body.success) {
+        return reply.status(400).send({ error: 'Validation error', details: body.error.errors });
+      }
+
+      const existing = await fastify.prisma.host.findFirst({
+        where: { id, tenantId: request.user.tenantId },
+      });
+
+      if (!existing) {
+        return reply.status(404).send({ error: 'Host not found' });
+      }
+
+      const host = await fastify.prisma.host.update({
+        where: { id },
+        data: body.data,
+      });
+
+      return { host };
+    },
+  );
 
   fastify.delete(
     '/:id',
