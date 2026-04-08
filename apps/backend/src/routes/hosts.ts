@@ -13,6 +13,8 @@ const createHostSchema = z.object({
 const updateHostSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   hostname: z.string().min(1).max(255).optional(),
+}).refine((data) => data.name !== undefined || data.hostname !== undefined, {
+  message: 'At least one field (name or hostname) must be provided',
 });
 
 export async function hostRoutes(fastify: FastifyInstance) {

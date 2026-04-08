@@ -178,7 +178,7 @@ export default function Sidebar() {
                 />
                 <div className="flex gap-2 mt-2">
                   <button
-                    onClick={() => { if (newDashboardName.trim()) createDashboard.mutate(newDashboardName.trim()); }}
+                    onClick={() => { createDashboard.mutate(newDashboardName.trim()); }}
                     disabled={!newDashboardName.trim() || createDashboard.isPending}
                     className="flex-1 py-1 text-xs bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 transition-colors"
                   >
@@ -260,7 +260,7 @@ export default function Sidebar() {
                 Cancel
               </button>
               <button
-                onClick={() => renameDashboard.mutate({ id: renamingDashboard.id, name: renameValue })}
+                onClick={() => renameDashboard.mutate({ id: renamingDashboard.id, name: renameValue.trim() })}
                 disabled={!renameValue.trim() || renameDashboard.isPending}
                 className="px-4 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors"
               >
