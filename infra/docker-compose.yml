@@ -54,10 +54,12 @@ services:
       JWT_AGENT_SECRET: ${JWT_AGENT_SECRET:?JWT_AGENT_SECRET must be set}
       PORT: 3000
       HOST: 0.0.0.0
-      PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+      PUBLIC_URL: ${PUBLIC_URL:?PUBLIC_URL must be set (e.g. https://api.neytiri-space.fr)}
       NODE_ENV: production
     expose:
       - '3000'
+    ports:
+      - '3000:3000'
 
   frontend:
     build:

@@ -3,6 +3,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import websocket from '@fastify/websocket';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 import { config } from './config.js';
 import { logger } from './logger.js';
@@ -19,6 +21,10 @@ import { alertRoutes } from './routes/alerts.js';
 import { agentRoutes } from './routes/agent.js';
 import { triggerRoutes } from './routes/triggers.js';
 import { startAlertProcessor } from './services/alertProcessor.js';
+
+// Resolved relative to the compiled output (dist/) or the TypeScript source (src/),
+// both of which sit one level above the scripts/ folder in apps/backend/.
+const INSTALL_SCRIPT = readFileSync(resolve(__dirname, '../scripts/install-agent-linux.sh'), 'utf8');
 
 const app = Fastify({
   logger: false,
@@ -50,6 +56,12 @@ async function bootstrap() {
   await app.register(triggerRoutes, { prefix: '/api/v1/triggers' });
 
   app.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+
+  app.get('/install.sh', async (_request, reply) => {
+    reply.header('Content-Type', 'text/x-shellscript; charset=utf-8');
+    reply.header('Content-Disposition', 'inline; filename="install.sh"');
+    return reply.send(INSTALL_SCRIPT);
+  });
 
   await app.listen({ port: config.port, host: config.host });
 

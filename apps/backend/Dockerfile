@@ -35,6 +35,7 @@ COPY --from=builder /monorepo/apps/backend/dist        ./dist
 COPY --from=builder /monorepo/apps/backend/prisma      ./prisma
 COPY --from=builder /monorepo/apps/backend/package.json ./package.json
 COPY --from=builder /monorepo/apps/backend/node_modules ./node_modules
+COPY --from=builder /monorepo/apps/backend/scripts     ./scripts
 
 EXPOSE 3000
 
