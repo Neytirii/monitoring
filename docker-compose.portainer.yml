@@ -7,9 +7,9 @@
 # Variables d'environnement obligatoires à définir dans Portainer :
 #   JWT_SECRET        - Secret JWT pour les utilisateurs  (openssl rand -base64 32)
 #   JWT_AGENT_SECRET  - Secret JWT pour les agents        (openssl rand -base64 32)
+#   PUBLIC_URL        - URL publique de l'API backend     (ex: https://api.neytiri-space.fr)
 #
 # Variables optionnelles :
-#   PUBLIC_URL        - URL publique de l'application  (défaut : http://localhost)
 #   POSTGRES_USER     - Utilisateur PostgreSQL         (défaut : monitoring)
 #   POSTGRES_PASSWORD - Mot de passe PostgreSQL        (défaut : monitoring)
 #   POSTGRES_DB       - Nom de la base                 (défaut : monitoring)
@@ -60,10 +60,12 @@ services:
       JWT_AGENT_SECRET: ${JWT_AGENT_SECRET:?JWT_AGENT_SECRET must be set}
       PORT: 3000
       HOST: 0.0.0.0
-      PUBLIC_URL: ${PUBLIC_URL:-http://localhost}
+      PUBLIC_URL: ${PUBLIC_URL:?PUBLIC_URL must be set (e.g. https://api.neytiri-space.fr)}
       NODE_ENV: production
     expose:
       - '3000'
+    ports:
+      - '3000:3000'
 
   frontend:
     image: ghcr.io/neytirii/monitoring-frontend:latest
